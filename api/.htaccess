@@ -1,0 +1,10 @@
+<Files "config.php">
+    Require all denied
+</Files>
+
+# Batasi akses langsung ke file API
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_METHOD} !^(POST|OPTIONS)$
+    RewriteRule ^chat\.php$ - [R=405,L]
+</IfModule>

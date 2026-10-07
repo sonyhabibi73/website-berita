@@ -1,0 +1,32 @@
+# =============================================================
+#  RAHASIA — jangan pernah masuk ke repository
+# =============================================================
+# Berisi API key (Gemini, APITube, OpenRouter).
+# Salin dari api/config.example.php lalu isi key-mu sendiri.
+api/config.php
+
+# Kredensial database lokal.
+# Salin dari koneksi.example.php.
+koneksi.php
+
+# =============================================================
+#  DATA RUNTIME — diisi otomatis program, bukan bagian kode
+# =============================================================
+# Cache berita dari APITube, diperbarui tiap 4 jam.
+cache/
+
+# Folder unggahan yang dibuat sendiri saat runtime.
+uploads/
+
+# =============================================================
+#  SISTEM & EDITOR
+# =============================================================
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+
+# Editor / IDE
+.idea/
+.vscode/
+*.swp
