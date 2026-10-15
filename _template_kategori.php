@@ -74,12 +74,12 @@ include 'includes/header.php';
                             class="card-img"
                             onerror="this.src='assets/img/placeholder.jpg'"
                         >
-                        <span class="badge badge-<?= $item['kategori'] ?>">
-                            <?= ucfirst($item['kategori']) ?>
-                        </span>
                     </a>
                     <div class="card-body">
-                        <time class="card-date"><?= formatTanggal($item['tanggal']) ?></time>
+                        <div class="card-meta">
+                            <span class="badge"><?= ucfirst($item['kategori']) ?></span>
+                            <time class="card-date"><?= formatTanggal($item['tanggal']) ?></time>
+                        </div>
                         <h3 class="card-title">
                             <a href="detail.php?id=<?= $item['id'] ?>">
                                 <?= htmlspecialchars($item['judul']) ?>

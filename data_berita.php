@@ -194,7 +194,12 @@ function kimi_news_http($url, $key)
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_CONNECTTIMEOUT  => 5,
-        CURLOPT_TIMEOUT         => 15,
+        // Kategori olahraga terukur TTFB 17 detik, dan sekali melebihi 25
+        // detik sementara kategori lain 4-6 detik. Dengan batas 15 detik
+        // kategori itu selalu gagal; 30 detik memberi ruang di atas
+        // pengukuran tertinggi. Kecepatan transfer bukan masalah —
+        // 150 KB hanya butuh 0,76 detik, yang lama pemrosesan server.
+        CURLOPT_TIMEOUT         => 30,
         CURLOPT_FOLLOWLOCATION  => true,
         CURLOPT_MAXREDIRS       => 2,
         CURLOPT_USERAGENT       => 'KimiNEWS/1.0',
@@ -280,6 +285,67 @@ function kimi_news_bersihkan($isi)
 }
 
 /**
+ * Ambil kalimat inti dari field 'summary' API berita.
+ *
+ * Paket gratis memangkas 'body' sampai ±250 karakter dan menyisipkan
+ * penanda "...(+4508 chars hidden)...[Upgrade subscription plan]", jadi
+ * isi artikel aslinya tidak pernah sampai. Field 'summary' berbeda:
+ * API mengirim lima kalimat kunci yang utuh dan tidak pernah terpotong.
+ * Dialah satu-satunya sumber penjelasan lengkap pada paket free, dan
+ * datang bersama respons yang sama sehingga tidak menambah request.
+ *
+ * @return array daftar kalimat utuh; bisa kosong kalau field tidak ada
+ */
+function kimi_news_ringkasan($a)
+{
+    $kalimat = [];
+    foreach ((array) ($a['summary'] ?? []) as $s) {
+        $t = is_array($s) ? trim((string) ($s['sentence'] ?? '')) : trim((string) $s);
+        if ($t === '') {
+            continue;
+        }
+        // Belum berakhir tanda berhenti -> terpotong di tengah, sama seperti
+        // body. Menampilkannya berarti memotong kalimat secara kasar.
+        if (!preg_match('/[.!?]["\')\]’”]*\s*$/u', $t)) {
+            continue;
+        }
+        $kalimat[] = $t;
+    }
+
+    // Buang duplikat persis — paket free kadang mengulang kalimat yang sama.
+    $unik = [];
+    foreach ($kalimat as $t) {
+        $kunci = preg_replace('/[^a-z0-9]/', '', mb_strtolower($t));
+        if ($kunci !== '') {
+            $unik[$kunci] = $t;
+        }
+    }
+    return array_values($unik);
+}
+
+/**
+ * Apakah dua teks berisi materi yang sama sehingga cukup tampil satu?
+ *
+ * Dipakai supaya lead dan penjelasan tidak menampilkan kalimat yang sama
+ * dua kali. 'description' pada paket free adalah cuplikan awal artikel,
+ * sehingga sering persis berupa salah satu kalimat dari 'summary'.
+ *
+ * @return bool true kalau salah satunya mengandung yang lain
+ */
+function kimi_news_sama_isi($a, $b)
+{
+    $bersih = function ($s) {
+        return (string) preg_replace('/[^a-z0-9]/', '', mb_strtolower($s));
+    };
+    $na = $bersih($a);
+    $nb = $bersih($b);
+    if ($na === '' || $nb === '') {
+        return false;
+    }
+    return $na === $nb || str_contains($na, $nb) || str_contains($nb, $na);
+}
+
+/**
  * Ubah satu artikel APITube menjadi entri yang dipahami halaman.
  * id_map dan next_id dilewatkan lewat referensi supaya id integer
  * yang sama dipakai ulang setiap kali cache diperbarui — kalau tidak,
@@ -304,12 +370,42 @@ function kimi_news_ubah($a, $slug, &$id_map, &$next_id)
     }
 
     $deskripsi = trim((string) ($a['description'] ?? ''));
-    $isi       = kimi_news_bersihkan($a['body'] ?? '');
-    if ($isi === '') {
-        $isi = $deskripsi;      // body terpotong -> pakai lead yang utuh
+    $kalimat   = kimi_news_ringkasan($a);
+
+    // LEAD: paket free memangkas 'description' juga (±9 dari 10 artikel
+    // berakhir "...Kementeri..."), jadi kalimat summary pertama yang utuh
+    // lebih layak jadi pembuka. 'description' hanya dipakai kalau summary
+    // tidak ada sekali pun.
+    $lead = $kalimat[0] ?? '';
+    if ($lead === '') {
+        $lead = $deskripsi !== '' ? $deskripsi : $judul;
+    }
+
+    // PENJELASAN: sisa kalimat summary lebih dulu, lalu jatuh ke body yang
+    // sudah dibersihkan, terakhir ke deskripsi. Setiap kandidat ditolak
+    // kalau isinya sama dengan lead supaya teks tidak tampil dua kali.
+    $kandidat = [];
+    if (count($kalimat) > 1) {
+        $kandidat[] = implode("\n\n", array_slice($kalimat, 1));
+    }
+    $kandidat[] = kimi_news_bersihkan($a['body'] ?? '');
+    if ($deskripsi !== '') {
+        $kandidat[] = $deskripsi;
+    }
+
+    $isi = '';
+    foreach ($kandidat as $c) {
+        $c = trim($c);
+        if ($c === '' || kimi_news_sama_isi($c, $lead)) {
+            continue;
+        }
+        $isi = $c;
+        break;
     }
     if ($isi === '') {
-        $isi = $judul;
+        // Tidak ada penjelasan terpisah. Samakan dengan lead supaya
+        // detail.php masuk mode ringkas: lead + tautan sumber saja.
+        $isi = $lead;
     }
 
     $ts = strtotime((string) ($a['published_at'] ?? ''));
@@ -324,7 +420,7 @@ function kimi_news_ubah($a, $slug, &$id_map, &$next_id)
         'id'          => (int) $id_map[$uid],
         'judul'       => $judul,
         'kategori'    => $slug,
-        'isi_singkat' => $deskripsi !== '' ? $deskripsi : $judul,
+        'isi_singkat' => $lead,
         'isi_lengkap' => $isi,
         'tanggal'     => $ts ? date('Y-m-d', $ts) : date('Y-m-d'),
         'gambar'      => $gambar,
@@ -382,10 +478,17 @@ function kimi_news_segarkan($cfg, $key, $cache)
         }
     }
 
-    // --- enam kali panggil, urutannya bebas, semua muat di 10 req/mnt -
-    foreach (kimi_news_kategori_map() as $slug => $kategori_id) {
+    $peta  = kimi_news_kategori_map();
+    $gagal = [];
+
+    // Satu kategori = satu panggilan. Dipisah jadi closure supaya bisa
+    // dipakai ulang untuk pengulangan di bawah.
+    $tarik = function ($slug, $kategori_id) use (
+        &$cache, &$dipakai, &$punya, &$next_id, &$gagal,
+        $cfg, $key, $per, $batas, $budget
+    ) {
         if ($dipakai >= $budget || count($cache['artikel']) >= $batas) {
-            break;
+            return;
         }
 
         $q = array_merge((array) $cfg['news_filter'], [
@@ -400,7 +503,8 @@ function kimi_news_segarkan($cfg, $key, $cache)
         $dipakai++;
         $d = kimi_news_http($url, $key);
         if ($d === null) {
-            continue;   // kategori ini gagal; kategori berikut dicoba
+            $gagal[] = $slug;   // kategori ini gagal; dicatat untuk diulang
+            return;
         }
 
         foreach ((array) ($d['results'] ?? []) as $a) {
@@ -418,6 +522,25 @@ function kimi_news_segarkan($cfg, $key, $cache)
             $cache['artikel'][] = $item;
             $punya[$uid] = true;
         }
+    };
+
+    // --- enam kali panggil, urutannya bebas, semua muat di 10 req/mnt -
+    foreach ($peta as $slug => $kategori_id) {
+        $tarik($slug, $kategori_id);
+    }
+
+    // --- ulang sekali kategori yang gagal ----------------------------
+    // Kategori bisa gagal karena batas waktu — terukur, olahraga butuh
+    // TTFB 17 detik sementara yang lain 4-6 detik. Tanpa pengulangan,
+    // kategori itu kosong sampai TTL berikutnya (4 jam kemudian). Satu
+    // kali ulang menambah paling banyak enam request dan tetap jauh di
+    // bawah batas 10 request/menit; kalau kuota harian sudah mentok,
+    // pemeriksaan di atas menghentikannya.
+    foreach (array_unique($gagal) as $slug) {
+        if (!isset($peta[$slug])) {
+            continue;
+        }
+        $tarik($slug, $peta[$slug]);
     }
 
     $cache['kouta_dipakai'] = $dipakai;

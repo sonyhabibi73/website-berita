@@ -69,6 +69,7 @@ include 'includes/header.php';
         </nav>
 
         <!-- ARTIKEL UTAMA -->
+        <div class="detail-layout">
         <article class="detail-article">
 
             <!-- Header artikel: kategori, tanggal, judul -->
@@ -96,9 +97,6 @@ include 'includes/header.php';
                     class="article-img"
                     onerror="this.src='assets/img/placeholder.jpg'"
                 >
-                <figcaption>
-                    Foto ilustrasi: <?= htmlspecialchars($artikel['judul']) ?>
-                </figcaption>
             </figure>
 
             <!-- ISI LENGKAP ARTIKEL
@@ -148,6 +146,48 @@ include 'includes/header.php';
             </div>
 
         </article>
+
+        <!-- REL KANAN: se-kategori + terbaru -->
+        <?php
+        $sekategori = array_filter(
+            getBeritaByKategori($berita, $artikel['kategori']),
+            fn($b) => $b['id'] !== $artikel['id']
+        );
+        $terbaru = getAllBerita($berita);
+        ?>
+        <aside class="article-rail">
+            <?php if (!empty($sekategori)): ?>
+            <div class="rail-block">
+                <h2 class="section-title">Lainnya di <?= ucfirst($artikel['kategori']) ?></h2>
+                <ul class="mini-list">
+                    <?php foreach (array_slice($sekategori, 0, 5) as $lain): ?>
+                    <li>
+                        <a href="detail.php?id=<?= $lain['id'] ?>">
+                            <span class="mini-cat"><?= ucfirst($lain['kategori']) ?></span>
+                            <span class="mini-title"><?= htmlspecialchars($lain['judul']) ?></span>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+
+            <div class="rail-block">
+                <h2 class="section-title">Terbaru</h2>
+                <ul class="mini-list">
+                    <?php foreach (array_slice($terbaru, 0, 5) as $baru): ?>
+                    <li>
+                        <a href="detail.php?id=<?= $baru['id'] ?>">
+                            <span class="mini-cat"><?= formatTanggal($baru['tanggal']) ?></span>
+                            <span class="mini-title"><?= htmlspecialchars($baru['judul']) ?></span>
+                        </a>
+                    </li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        </aside>
+
+        </div><!-- /detail-layout -->
 
     <?php endif; ?>
 

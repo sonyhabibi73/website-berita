@@ -69,4 +69,4 @@
 
 </section>
 
-<script src="assets/js/chat.js" defer></script>
+<script src="assets/js/chat.js?v=20261016c" defer></script>

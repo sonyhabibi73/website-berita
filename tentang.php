@@ -85,7 +85,7 @@ include 'includes/header.php';
             ];
             foreach ($tim as $anggota): ?>
             <div class="tim-card">
-                <div class="tim-avatar" style="width: 80px; height: 80px; margin: 0 auto 15px; overflow: hidden; border-radius: 50%;">
+                <div class="tim-avatar" style="width: 80px; height: 80px; margin: 0 auto 15px; overflow: hidden;">
                     <img src="<?= htmlspecialchars($anggota['foto']) ?>" 
                          alt="Foto <?= htmlspecialchars($anggota['nama']) ?>" 
                          style="width: 100%; height: 100%; object-fit: cover;">

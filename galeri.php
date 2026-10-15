@@ -41,22 +41,23 @@ include 'includes/header.php';
         <!-- data-kategori digunakan oleh JavaScript untuk filter -->
         <div class="galeri-item" data-kategori="<?= $item['kategori'] ?>">
             <a href="detail.php?id=<?= $item['id'] ?>" class="galeri-link">
-                <img
-                    src="<?= htmlspecialchars($item['gambar']) ?>"
-                    alt="<?= htmlspecialchars($item['judul']) ?>"
-                    class="galeri-img"
-                    loading="lazy"
-                    onerror="this.src='assets/img/placeholder.jpg'"
-                >
-                <div class="galeri-overlay">
-                    <span class="badge badge-<?= $item['kategori'] ?>">
-                        <?= ucfirst($item['kategori']) ?>
-                    </span>
-                    <p class="galeri-caption">
+                <span class="galeri-img-wrap">
+                    <img
+                        src="<?= htmlspecialchars($item['gambar']) ?>"
+                        alt="<?= htmlspecialchars($item['judul']) ?>"
+                        class="galeri-img"
+                        loading="lazy"
+                        onerror="this.src='assets/img/placeholder.jpg'"
+                    >
+                </span>
+                <!-- Keterangan di bawah foto, bukan timpa di atasnya -->
+                <span class="galeri-cap">
+                    <span class="badge"><?= ucfirst($item['kategori']) ?></span>
+                    <span class="galeri-caption">
                         <?= htmlspecialchars(truncate($item['judul'], 60)) ?>
-                    </p>
+                    </span>
                     <span class="galeri-read">Baca Artikel →</span>
-                </div>
+                </span>
             </a>
         </div>
         <?php endforeach; ?>

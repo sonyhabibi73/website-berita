@@ -16,13 +16,14 @@
     <!-- Title halaman dinamis: setiap halaman bisa set $page_title sendiri -->
     <title><?= isset($page_title) ? htmlspecialchars($page_title) . ' — ' : '' ?>KimiNEWS</title>
 
-    <!-- Google Fonts: Playfair Display untuk heading, Source Sans 3 untuk body -->
+    <!-- Google Fonts: Schibsted Grotesk — satu keluarga, dipakai perusahaan berita -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
-    <link  rel="icon" href="assets/img/favicon.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="assets/img/favicon.png" type="image/png">
     
     <!-- CSS Utama -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="stylesheet" href="assets/css/style.css?v=20261016c">
 </head>
 <body>
 
@@ -56,22 +57,7 @@
                 Beranda
             </a>
 
-            <!-- DROPDOWN MENU KATEGORI
-                 Hover di desktop → tampil. Klik di HP → toggle via JS -->
-            <div class="dropdown <?= $halaman_aktif === 'kategori' ? 'aktif' : '' ?>">
-                <button class="nav-link dropdown-toggle" aria-haspopup="true">
-                    Kategori <span class="arrow">▾</span>
-                </button>
-                <div class="dropdown-menu">
-                    <a href="kat-teknologi.php"  class="dropdown-item">Teknologi</a>
-                    <a href="kat-olahraga.php"   class="dropdown-item">Olahraga</a>
-                    <a href="kat-hiburan.php"    class="dropdown-item">Hiburan</a>
-                    <a href="kat-politik.php"    class="dropdown-item">Politik</a>
-                    <a href="kat-kesehatan.php"  class="dropdown-item">Kesehatan</a>
-                    <a href="kat-pendidikan.php" class="dropdown-item">Pendidikan</a>
-                </div>
-            </div>
-
+            <!-- Kategori pindah ke rel di bawah header supaya nav muat satu baris -->
             <a href="galeri.php"
                class="nav-link <?= $halaman_aktif === 'galeri' ? 'aktif' : '' ?>">
                  Galeri
@@ -107,13 +93,28 @@
 
         </nav><!-- /main-nav -->
     </div><!-- /container -->
+
+    <!-- REL KATEGORI — 6 kanal selalu terlihat, tanpa dropdown -->
+    <div class="cat-rail">
+        <div class="container cat-rail-inner">
+            <?php
+            $kategori_semua = ['teknologi', 'politik', 'olahraga', 'kesehatan', 'pendidikan', 'hiburan'];
+            foreach ($kategori_semua as $k):
+                $aktif_rail = ($halaman_aktif === 'kategori' && isset($nama_kategori) && $nama_kategori === $k);
+            ?>
+                <a href="kat-<?= $k ?>.php" class="cat-link <?= $aktif_rail ? 'aktif' : '' ?>">
+                    <?= ucfirst($k) ?>
+                </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
 </header>
 
 <!-- Overlay gelap saat menu HP terbuka (klik untuk menutup) -->
 <div class="nav-overlay" id="navOverlay"></div>
 
 <!-- JavaScript untuk hamburger menu -->
-<script src="assets/js/script.js" defer></script>
+<script src="assets/js/script.js?v=20261016c" defer></script>
 
 <!-- KONTEN HALAMAN MULAI DI SINI -->
 <main class="site-main">

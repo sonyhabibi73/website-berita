@@ -117,35 +117,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
     // -------------------------------------------------------
-    // 5. KARTU BERITA — FADE-UP ANIMATION (Intersection Observer)
+    // 5. TANPA ANIMASI SADAR-KARTU
+    //    Konten berita selalu terlihat walau JavaScript gagal.
+    //    Gerak hanya lewat transisi hover di CSS.
     // -------------------------------------------------------
-    const animTargets = document.querySelectorAll(
-        '.berita-card, .tim-card, .stat-item, .kontak-info-item, .galeri-item'
-    );
-
-    if ('IntersectionObserver' in window && animTargets.length > 0) {
-        animTargets.forEach(function (el) {
-            el.style.opacity    = '0';
-            el.style.transform  = 'translateY(24px)';
-            el.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
-        });
-
-        const observer = new IntersectionObserver(function (entries) {
-            entries.forEach(function (entry, i) {
-                if (entry.isIntersecting) {
-                    setTimeout(function () {
-                        entry.target.style.opacity   = '1';
-                        entry.target.style.transform = 'translateY(0)';
-                    }, i * 80);
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-
-        animTargets.forEach(function (el) { observer.observe(el); });
-    }
 
 
-    console.log('%cKimiNEWS — script.js loaded (responsive fixed)', 'color: #e8a020; font-weight: bold;');
+    console.log('%cKimiNEWS — script.js loaded (wire desk)', 'color: #e8a020; font-weight: bold;');
 
 }); // end DOMContentLoaded
